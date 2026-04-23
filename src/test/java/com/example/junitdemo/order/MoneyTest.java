@@ -17,6 +17,7 @@ import static org.assertj.core.api.SoftAssertions.assertSoftly;
  * Demonstriert:
  * - assertThat() statt JUnit assertEquals() — flüssige, lesbare API
  * - Assertion-Chaining für mehrere Prüfungen auf einem Objekt
+ * - extracting() — mehrere Felder eines Objekts kompakt prüfen
  * - assertSoftly() — alle Assertions laufen durch, auch wenn eine fehlschlägt
  * - assertThatThrownBy() — Exceptions typsicher und beschreibend prüfen
  * - Beschreibende Fehlermeldungen mit as()
@@ -38,6 +39,37 @@ class MoneyTest {
         // Best Practice: Assertion-Chaining — mehrere Prüfungen in einem Block
         assertThat(money.getAmount()).isEqualByComparingTo(new BigDecimal("42.50"));
         assertThat(money.getCurrency()).isEqualTo(Currency.getInstance("EUR"));
+    }
+
+    @Test
+    @DisplayName("extracting() prüft mehrere Felder eines Objekts in einer Assertion")
+    void of_validInput_extractingVerifiesAllFields() {
+        Money money = Money.of("19.99", "EUR");
+
+        // Best Practice: extracting() mit Methodenreferenzen — kompakter als separate assertThat()-Aufrufe.
+        // Besonders nützlich bei DTOs, Entities oder Value Objects mit vielen Feldern.
+        // Fehlermeldung zeigt automatisch welches Feld abweicht.
+        assertThat(money)
+            .extracting(Money::getAmount, Money::getCurrency)
+            .containsExactly(
+                new BigDecimal("19.99"),
+                Currency.getInstance("EUR")
+            );
+    }
+
+    @Test
+    @DisplayName("extracting() mit Feldnamen als String — alternativ zu Methodenreferenzen")
+    void add_result_extractingByFieldName() {
+        Money result = Money.of("10.00", "EUR").add(Money.of("5.00", "EUR"));
+
+        // Variante mit String-Feldnamen: weniger typsicher, aber nützlich
+        // wenn keine Getter vorhanden oder für schnelle Ad-hoc-Assertions.
+        assertThat(result)
+            .extracting("amount", "currency")
+            .containsExactly(
+                new BigDecimal("15.00"),
+                Currency.getInstance("EUR")
+            );
     }
 
     @Test
